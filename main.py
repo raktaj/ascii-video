@@ -13,11 +13,11 @@ def resize_frame(frame, new_width=100):
 
 # Convert frame to ASCII
 def frame_to_ascii(frame):
-    # Compute brightness using vectorized NumPy operations
-    brightness = frame.mean(axis=2).astype(np.uint8)  # Faster brightness calculation
+    # Use perceptual luminance formula for brightness
+    brightness = (frame[:, :, 0] * 0.299 + frame[:, :, 1] * 0.587 + frame[:, :, 2] * 0.114).astype(np.uint8)
     char_indices = (brightness / 255 * (len(ASCII_CHARS) - 1)).astype(np.uint8)
 
-    # Create ANSI-colored ASCII characters using NumPy vectorization
+    # Generate ASCII art with colors
     rows = []
     for j in range(frame.shape[0]):
         row = "".join(f"\033[38;2;{r};{g};{b}m{ASCII_CHARS[idx]}" 
@@ -26,15 +26,16 @@ def frame_to_ascii(frame):
 
     return "\n".join(rows) + "\033[0m"  # Reset color at the end
 
-# Clear the terminal for live updating
-def clear_console():
-    sys.stdout.write("\033[H\033[J")  # ANSI escape codes for clearing screen
+# Optimized console rendering using cursor positioning
+def move_cursor_top():
+    sys.stdout.write("\033[H")  # Move cursor to the top-left corner
     sys.stdout.flush()
 
 # Main function to capture live video and display ASCII
 def live_ascii_video():
     cap = cv2.VideoCapture(0)  # Capture video from webcam
     try:
+        print("\033[2J", end="")  # Clear the screen once at the beginning
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -44,7 +45,7 @@ def live_ascii_video():
             resized_frame = resize_frame(frame)  # Resize for faster processing
             ascii_art = frame_to_ascii(resized_frame)  # Convert frame to ASCII
 
-            clear_console()
+            move_cursor_top()  # Move cursor to the top instead of clearing the screen
             sys.stdout.write(ascii_art + "\n")
             sys.stdout.flush()
 
