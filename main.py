@@ -1,61 +1,58 @@
 import cv2
 import numpy as np
-import os
+import sys
 
 # ASCII characters based on brightness levels
 ASCII_CHARS = "Ñ@#W$9876543210?!abc;:+=-,._"
 
-# Function to convert RGB to ANSI color escape code
-def rgb_to_ansi(r, g, b):
-    return f"\033[38;2;{r};{g};{b}m"
-
 # Resize the frame
-def resize_frame(frame, new_width=80):
-    height, width, _ = frame.shape
-    aspect_ratio = height / width
-    new_height = int(aspect_ratio * new_width * 0.55)  # Adjust height to keep aspect ratio
-    return cv2.resize(frame, (new_width, new_height))
+def resize_frame(frame, new_width=100):
+    height, width = frame.shape[:2]
+    new_height = int(height / width * new_width * 0.55)  # Maintain aspect ratio
+    return cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_LINEAR)
 
-# Convert the frame to ASCII art
+# Convert frame to ASCII
 def frame_to_ascii(frame):
-    ascii_frame = ""
+    # Compute brightness using vectorized NumPy operations
+    brightness = frame.mean(axis=2).astype(np.uint8)  # Faster brightness calculation
+    char_indices = (brightness / 255 * (len(ASCII_CHARS) - 1)).astype(np.uint8)
+
+    # Create ANSI-colored ASCII characters using NumPy vectorization
+    rows = []
     for j in range(frame.shape[0]):
-        for i in range(frame.shape[1]):
-            r, g, b = frame[j, i]
-            brightness = int(np.mean([r, g, b]))  # Calculate brightness
-            char_index = int((brightness / 255) * (len(ASCII_CHARS) - 1))
-            ascii_char = ASCII_CHARS[char_index]
-            ascii_frame += rgb_to_ansi(r, g, b) + ascii_char  # Add color
-        ascii_frame += "\033[0m\n"  # Reset color after each row
-    return ascii_frame
+        row = "".join(f"\033[38;2;{r};{g};{b}m{ASCII_CHARS[idx]}" 
+                      for (r, g, b), idx in zip(frame[j], char_indices[j]))
+        rows.append(row)
+
+    return "\n".join(rows) + "\033[0m"  # Reset color at the end
 
 # Clear the terminal for live updating
 def clear_console():
-    os.system('cls' if os.name == 'nt' else 'clear')
+    sys.stdout.write("\033[H\033[J")  # ANSI escape codes for clearing screen
+    sys.stdout.flush()
 
-# Main function to capture live video and display ASCII art
+# Main function to capture live video and display ASCII
 def live_ascii_video():
     cap = cv2.VideoCapture(0)  # Capture video from webcam
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        # Convert BGR to RGB to fix color tint
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
+            resized_frame = resize_frame(frame)  # Resize for faster processing
+            ascii_art = frame_to_ascii(resized_frame)  # Convert frame to ASCII
 
-        resized_frame = resize_frame(frame)  # Resize the frame for faster processing
-        ascii_art = frame_to_ascii(resized_frame)
+            clear_console()
+            sys.stdout.write(ascii_art + "\n")
+            sys.stdout.flush()
 
-        clear_console()  # Clear the console for each new frame
-        print(ascii_art)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+            if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
+                break
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     live_ascii_video()
-
