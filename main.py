@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+import keyboard
 
 # ASCII characters based on brightness levels
 ASCII_CHARS = "Ñ@#W$9876543210?!abc;:+=-,._"
@@ -17,41 +18,45 @@ def frame_to_ascii(frame):
     brightness = (frame[:, :, 0] * 0.299 + frame[:, :, 1] * 0.587 + frame[:, :, 2] * 0.114).astype(np.uint8)
     char_indices = (brightness / 255 * (len(ASCII_CHARS) - 1)).astype(np.uint8)
 
-    # Generate ASCII art with colors
     rows = []
     for j in range(frame.shape[0]):
         row = "".join(f"\033[38;2;{r};{g};{b}m{ASCII_CHARS[idx]}" 
                       for (r, g, b), idx in zip(frame[j], char_indices[j]))
         rows.append(row)
 
-    return "\n".join(rows) + "\033[0m"  # Reset color at the end
+    return rows  # Returns a list of rows
 
-# Optimized console rendering using cursor positioning
-def move_cursor_top():
-    sys.stdout.write("\033[H")  # Move cursor to the top-left corner
+# Optimized rendering using a static buffer
+def render_ascii(buffer, new_frame):
+    for i, (old_row, new_row) in enumerate(zip(buffer, new_frame)):
+        if old_row != new_row:  # Only update changed lines
+            sys.stdout.write(f"\033[{i+1};1H{new_row}")  # Move to line `i+1` and update
     sys.stdout.flush()
+    return new_frame  # Update buffer
 
 # Main function to capture live video and display ASCII
 def live_ascii_video():
-    cap = cv2.VideoCapture(0)  # Capture video from webcam
+    cap = cv2.VideoCapture(0)
     try:
-        print("\033[2J", end="")  # Clear the screen once at the beginning
+        print("\033[2J", end="")  # Clear screen once at start
+        _, frame = cap.read()
+        frame = resize_frame(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        buffer = frame_to_ascii(frame)  # Initialize buffer
+
         while True:
             ret, frame = cap.read()
             if not ret:
                 break
 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert to RGB
-            resized_frame = resize_frame(frame)  # Resize for faster processing
-            ascii_art = frame_to_ascii(resized_frame)  # Convert frame to ASCII
+            frame = resize_frame(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            new_frame = frame_to_ascii(frame)
 
-            move_cursor_top()  # Move cursor to the top instead of clearing the screen
-            sys.stdout.write(ascii_art + "\n")
-            sys.stdout.flush()
+            buffer = render_ascii(buffer, new_frame)  # Only update necessary parts
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to quit
+            if keyboard.is_pressed("q"):
                 break
     finally:
+        print("\033[0m")
         cap.release()
         cv2.destroyAllWindows()
 
