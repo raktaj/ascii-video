@@ -7,7 +7,7 @@ This program captures live video from your webcam and converts each frame into c
 - Converts live webcam video into colorful ASCII art.
 - Adjusts the aspect ratio for better viewing.
 - Uses ANSI escape codes to display RGB colors in the terminal.
-- Easy-to-use interface: simply run the program and see the live ASCII video.
+- Optimized with a static terminal buffer to prevent flickering.
 - Press `q` to quit the program.
 
 ## Prerequisites
@@ -23,7 +23,7 @@ This program captures live video from your webcam and converts each frame into c
 2. Install the required libraries:
 
     ```bash
-    pip install opencv-python numpy
+    pip install opencv-python numpy keyboard
     ```
 
 ## How to Run
@@ -44,14 +44,13 @@ This program captures live video from your webcam and converts each frame into c
 2. **Frame Resizing**: The frames are resized for faster processing and to maintain an appropriate aspect ratio for ASCII display.
 3. **Brightness Calculation**: For each pixel, the program calculates the brightness and selects a corresponding ASCII character based on the brightness level.
 4. **Color Mapping**: The program maps the RGB values of each pixel to ANSI escape codes, allowing the ASCII characters to retain the original colors of the video.
-5. **Live Update**: The terminal is cleared for each frame to create a live video effect.
+5. **Static Buffer Rendering**: Instead of clearing the screen each frame, the program moves the cursor to the top-left to prevent terminal flickering and provide a smoother experience.
 
 ## Code Structure
 
-- **`rgb_to_ansi(r, g, b)`**: Converts RGB values to an ANSI escape code for colored terminal output.
 - **`resize_frame(frame, new_width=80)`**: Resizes the video frame while maintaining the aspect ratio.
 - **`frame_to_ascii(frame)`**: Converts a video frame into an ASCII art string, with RGB colors applied.
-- **`clear_console()`**: Clears the terminal screen.
+- **`render_ascii(ascii_art)`**: Efficiently writes ASCII art to the terminal using a static buffer approach.
 - **`live_ascii_video()`**: Main function that captures video, converts it to ASCII art, and displays it in the terminal.
 
 ## Customization
