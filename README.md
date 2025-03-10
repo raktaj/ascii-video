@@ -15,6 +15,7 @@ This program captures live video from your webcam and converts each frame into c
 - Python 3.x
 - OpenCV (cv2)
 - NumPy
+- Keyboard
 
 ## Installation
 
