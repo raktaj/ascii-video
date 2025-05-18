@@ -3,7 +3,7 @@ import time
 import keyboard
 from settings import get_args, ASCII_CHAR_SETS
 from ascii_renderer import frame_to_ascii, render_ascii
-from utils import capture_video, resize_frame, calculate_fps, save_screenshot
+from utils import capture_video, resize_frame, calculate_fps
 
 def live_ascii_video():
     args = get_args()
