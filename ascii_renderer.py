@@ -11,7 +11,8 @@ def frame_to_ascii(frame, ascii_chars, invert, edges, filter_type, greyscale_mod
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         else:
             gray = frame  # Already grayscale (e.g., from Canny edge detection)
-
+        
+        gray = cv2.Canny(frame, 100, 200)
         brightness = gray  # Use grayscale brightness directly
     else:
         # If color image, calculate perceived brightness
