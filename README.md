@@ -26,7 +26,7 @@ This program captures live video from your webcam and converts each frame into c
 - Libraries:
   ```bash
   pip install opencv-python numpy keyboard
-```
+  ```
 
 ---
 
