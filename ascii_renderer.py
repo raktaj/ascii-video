@@ -3,15 +3,15 @@ import cv2
 import sys
 from filters import apply_filters
 
-def frame_to_ascii(frame, ascii_chars, invert, edges, filter_type, greyscale_mode):
+def frame_to_ascii(frame, ascii_chars, invert, edges, filter_type):
     frame = apply_filters(frame, filter_type)
     if edges:
         # Convert to grayscale if not already
         if len(frame.shape) == 3:  
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
         else:
-            gray = frame  # Already grayscale (e.g., from Canny edge detection)
-        
+            gray = frame  # Already grayscale
+
         gray = cv2.Canny(frame, 100, 200)
         brightness = gray  # Use grayscale brightness directly
     else:
@@ -29,11 +29,8 @@ def frame_to_ascii(frame, ascii_chars, invert, edges, filter_type, greyscale_mod
 
     rows = []
     for j in range(frame.shape[0]):
-        if greyscale_mode:
-            row = "".join(f"{ascii_chars[idx]}" for idx in char_indices[j])  # Greyscale mode
-        else:
-            row = "".join(f"\033[38;2;{r};{g};{b}m{ascii_chars[idx]}" 
-                          for (r, g, b), idx in zip(frame[j], char_indices[j]))  # Color mode
+        row = "".join(f"\033[38;2;{r};{g};{b}m{ascii_chars[idx]}" 
+                    for (r, g, b), idx in zip(frame[j], char_indices[j]))  # Color mode
 
         rows.append(row)
     return rows
