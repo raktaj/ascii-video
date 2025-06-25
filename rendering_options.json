@@ -1,0 +1,12 @@
+{
+    "ascii_char_sets": {
+      "classic": "Ñ@#W$9876543210?!abc;:+=-,._",
+      "blocks": "█▓▒░ ",
+      "minimal": "@%#*+=-:. "
+    },
+    "modes": {
+      "retro": ["sepia", "scanlines", "invert"],
+      "noir": ["grayscale", "edges"],
+      "chill": ["soft"]
+    }
+}
